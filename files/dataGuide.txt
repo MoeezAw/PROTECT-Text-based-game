@@ -1,0 +1,7 @@
+line 1 - 10:
+contains values of the variables found in the struct player
+
+level
+health
+location
+inventory

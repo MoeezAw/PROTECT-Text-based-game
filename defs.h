@@ -5,11 +5,11 @@
 
 #define JUICE "Juice"
 #define JUICE_HEAL 1.2
-#define JUICE_DAMAGE 1.2
+#define JUICE_DAMAGE 1.5
 
 #define BREAD "Bread"
 #define BREAD_HEAL 1.5
-#define BREAD_DAMAGE 1.1
+#define BREAD_DAMAGE 1.8
 
 #define SWORD "Sword"
 #define SWORD_HEAL 1

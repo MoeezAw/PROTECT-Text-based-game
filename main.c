@@ -1,9 +1,15 @@
+/**
+ * @brief       Main file of PROTECT
+ * @author      xMo (DISCORD: alexanderaugustus, GITHUB: xMo)
+ * @date        07.06.2024
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
 #include <string.h>
-
-int first_run = 0; // is this the first run of the program?
+#include <windows.h>
+#include "defs.h"
 
 #define STD_STRING_LENGTH       25
 #define INVENTORY_CAPACITY      6
@@ -39,6 +45,9 @@ char locations[5][STD_STRING_LENGTH] = {
 void first_run_code();
 void main_menu();
 int getInput();
+int isFirstRun();
+void displayUI();
+void getPossibleActions();
 
 // save and load functions
 int save(FILE* file);
@@ -48,55 +57,68 @@ int load(FILE* file);
 int main() {
     system("CHCP 65001"); // Set console to UTF-8
     printf("\033c");
+    int first_run = isFirstRun(); // is this the first run of the program?
+    int plrPlayed = 0; // did player play game or direclty exit?
+    
     // Open data file
     FILE* dataFile = NULL;
-    dataFile = fopen("data.txt", "r+");
+    dataFile = fopen("files/data.txt", "r+");
     if ( NULL == dataFile ) {
         printf("%s", LOAD_ERROR);
         return EXIT_FAILURE;
     }
-    plr.level = 1;
-    plr.health = 100;
-    strcpy(plr.location, locations[0]);
-    for (int i = 0; i < INVENTORY_CAPACITY; i++)
-    {
-        strcpy(plr.inventory[i].name, "Empty");
-        plr.inventory[i].heal = 0;
-        plr.inventory[i].damage_multiplier = 0;
-    }
-    
-
 
     // Code to manage a first run of the program (game)
     if (first_run) {
         first_run_code();
     }
-    // - [ MAIN MAIN CODE ] -
-    int input = 0;
-    main_menu();
-
-    // Get and check input from user
-    while ( (input < 1 || input > 2) && ESC != input) 
+    if (!first_run)
     {
-        input = getInput();
-    }
-    
-    switch (input)
-    {
-    case 1:
-        // TODO: Load game data ( int load() )
-        // Load data from file
         load(dataFile);
-        // TODO: Implement game code
-        break;
-    
-    case 2:
-    case ESC:
-        printf("Exiting...\n");
-        save(dataFile);
-        break;
+        for (int i = 0; i < 1; i++)
+        {
+            printf("Loading game data in %d seconds %s", 3 - i, (i == 0) ? "." : (i == 1) ? ".." : "...");
+            Sleep(1000);
+            printf("\033c");
+        }
+        Sleep(500);
     }
+    
+    int input = 0;
 
+    // - [ MAIN MAIN CODE ] -
+    printf("\033c");
+    main_menu();
+    do
+    {
+        input = 0;
+        // Get and check input from user
+        while ((input < 1 || input > 2) && ESC != input)
+        {
+            input = getInput();
+        }
+
+        printf("\033c");
+        
+        switch (input)
+        { // MAIN GAME:
+        case 1:
+            // TODO: Implement game code
+            displayUI();
+            break;
+
+        case 2:
+        case ESC:
+            printf("Exiting...\n");
+            save(dataFile);
+            printf("Saved game data.\n");
+            break;
+        }
+
+    } while (input != 2 && input != ESC);
+
+    // End of Program (Exit)
+    fclose(dataFile);
     printf("\n");
     return EXIT_SUCCESS;
 }
@@ -113,7 +135,27 @@ void main_menu() {
 
 void first_run_code() {
     // TODO: Implement first run code (Play tutorial, give Info, etc.)
-    first_run = 0;
+    // Set player data to default values:
+    plr.level = 1;
+    plr.health = 100;
+    strcpy(plr.location, locations[0]);
+    for (int i = 0; i < INVENTORY_CAPACITY; i++)
+    {
+        strcpy(plr.inventory[i].name, "Empty");
+        plr.inventory[i].heal = 0;
+        plr.inventory[i].damage_multiplier = 0;
+    }
+    // Tutorial:
+    printf("Hello, welcome to PROTECT!\n");
+    printf("This is your first time playing the game, so let's get you started.\n");
+    system("PAUSE");
+    printf("\033c");
+    printf("Please make sure to exit the game properly to save your progress.\n");
+    printf("If you want to learn about the stats of items, please read the included README file.\n");
+    system("PAUSE");
+    printf("\033c");
+    printf("Good luck and have fun!\n");
+    printf("\033c");
     return;
 }
 
@@ -135,7 +177,7 @@ int save(FILE* file) {
     for (int i = 0; i < INVENTORY_CAPACITY; i++) {
         fprintf(file, "%s\n", plr.inventory[i].name);
     }
-    
+
     return 1;
 }
 
@@ -150,4 +192,38 @@ int load(FILE* file) {
     }
 
     return 1;
+}
+
+/**
+ * @brief   Checks if it is the first run of the program.
+ * @details if flag file found -> not first run | if flag file not found -> first run
+ * @return 1 = First run, 0 = Not first run
+ */
+int isFirstRun() {
+    FILE* flagFile = NULL;
+    flagFile = fopen("files/first_run.flag", "r"); // Open file in read mode
+
+    if (NULL == flagFile) { // if file not found, create it, = first run
+        // printf("Flag-File not found\n");
+        flagFile = fopen("files/first_run.flag", "w+");
+        return 1;
+    }
+    else    // if file found, return 0, = not first run
+    {
+        // printf("Flag-File found\n");
+        return 0;
+    }
+    fclose(flagFile);
+}
+
+void displayUI() {
+    printf("[Level: %d]     [Health: %d]        [Location: %s]\n", plr.level, plr.health, plr.location);
+    printf("Inventory: [%s] [%s] [%s] [%s] [%s] [%s]\n\n", plr.inventory[0].name, 
+    plr.inventory[1].name, plr.inventory[2].name, plr.inventory[3].name, 
+    plr.inventory[4].name, plr.inventory[5].name);
+}
+
+void getPossibleActions() {
+    // TODO: Implement possible actions
+    return;
 }
