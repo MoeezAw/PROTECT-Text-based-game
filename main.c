@@ -9,7 +9,7 @@
 #include <conio.h>
 #include <string.h>
 #include <windows.h>
-#include "defs.h"
+#include "items.h"
 
 #define STD_STRING_LENGTH       25
 #define INVENTORY_CAPACITY      6
@@ -21,6 +21,8 @@ typedef struct
     char name[STD_STRING_LENGTH];
     float heal;
     float damage_multiplier;
+    int uses;
+    int uses_max;
 }   item;
 
 typedef struct
@@ -48,6 +50,7 @@ int getInput();
 int isFirstRun();
 void displayUI();
 void getPossibleActions();
+int getUses(char item_name[], int Index);
 
 // save and load functions
 int save(FILE* file);
@@ -75,7 +78,7 @@ int main() {
     if (!first_run)
     {
         load(dataFile);
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 3; i++)
         {
             printf("Loading game data in %d seconds %s", 3 - i, (i == 0) ? "." : (i == 1) ? ".." : "...");
             Sleep(1000);
@@ -141,9 +144,18 @@ void first_run_code() {
     strcpy(plr.location, locations[0]);
     for (int i = 0; i < INVENTORY_CAPACITY; i++)
     {
-        strcpy(plr.inventory[i].name, "Empty");
-        plr.inventory[i].heal = 0;
-        plr.inventory[i].damage_multiplier = 0;
+        if (i == 0)
+        {
+            strcpy(plr.inventory[i].name, SWORD);
+            plr.inventory[i].heal = SWORD_HEAL;
+            plr.inventory[i].damage_multiplier = SWORD_DAMAGE;
+        }
+        else
+        {
+            strcpy(plr.inventory[i].name, EMPTY);
+            plr.inventory[i].heal = EMPTY_HEAL;
+            plr.inventory[i].damage_multiplier = EMPTY_DAMAGE;
+        }
     }
     // Tutorial:
     printf("Hello, welcome to PROTECT!\n");
@@ -182,16 +194,79 @@ int save(FILE* file) {
 }
 
 int load(FILE* file) {
+    // Get player data from file:
     fseek(file, 0, SEEK_SET);
     fscanf(file, "%d", &plr.level);
     fscanf(file, "%d", &plr.health);
     fscanf(file, "%s", plr.location);
 
+    // Load inventory from file:
     for (int i = 0; i < INVENTORY_CAPACITY; i++) {
         fscanf(file, "%s", plr.inventory[i].name);
     }
-
+    
+    // Load inventory stats from file:
+    // Open items file
+    FILE* itemsFile = NULL;
+    itemsFile = fopen("files/uses.txt", "r");
+    if ( NULL == itemsFile ) {
+        printf("%s", LOAD_ERROR);
+        return 0;
+    }
+    // Load item stats from file:
+    for (int i = 0; i < INVENTORY_CAPACITY; i++)
+    {
+        if ( !(strcmp(plr.inventory[i].name, SWORD)) )
+        {
+            plr.inventory[i].heal = SWORD_HEAL;
+            plr.inventory[i].damage_multiplier = SWORD_DAMAGE;
+            plr.inventory[i].uses_max = SWORD_USES_MAX;
+            // Load Uses
+            getUses(SWORD, i);
+            
+        }
+        else if (strcmp(plr.inventory[i].name, JUICE) == 0)
+        {
+            plr.inventory[i].heal = JUICE_HEAL;
+            plr.inventory[i].damage_multiplier = JUICE_DAMAGE;
+        }
+        else if (strcmp(plr.inventory[i].name, BREAD) == 0)
+        {
+            plr.inventory[i].heal = BREAD_HEAL;
+            plr.inventory[i].damage_multiplier = BREAD_DAMAGE;
+        }
+        else if (strcmp(plr.inventory[i].name, EMPTY) == 0)
+        {
+            plr.inventory[i].heal = EMPTY_HEAL;
+            plr.inventory[i].damage_multiplier = EMPTY_DAMAGE;
+        }
+        
+    }
     return 1;
+}
+
+int getUses(char item_name[], int Index) {
+    // Open uses file
+    FILE* usesFile = NULL;
+    usesFile = fopen("files/uses.txt", "r");
+    if ( NULL == usesFile ) {
+        printf("%s", LOAD_ERROR);
+        return 0;
+    }
+    // Load item uses from file:
+    char tmp[STD_STRING_LENGTH];
+    fseek(usesFile, 0, SEEK_SET);
+
+    for (int i = 0; i < INVENTORY_CAPACITY * 2; i++)
+    {
+        char tmp[STD_STRING_LENGTH];
+        fscanf(usesFile, "%s", tmp);
+        if (!(strcmp(tmp, item_name)))
+        {
+            fscanf(usesFile, "%d", &plr.inventory[i].uses);
+            break;
+        }
+    }
 }
 
 /**
