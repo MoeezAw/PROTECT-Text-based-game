@@ -1,3 +1,7 @@
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+FILE: data.txt
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
 line 1 - 10:
 contains values of the variables found in the struct player
 
@@ -5,3 +9,9 @@ level
 health
 location
 inventory
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+FILE: uses.txt
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+contains the number of usages of each item in the players inventory
