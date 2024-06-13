@@ -66,15 +66,15 @@ typedef struct location_action {
 } loc_act;
 
 loc_act locs_acs[AMT_LOCATIONS] = {
-    { "Home",                   { "Sleep", "repair-equipment", "eat", "paint-east-wall", "-> Jallra", lastAction,} },
-    { "Jallra",                 { "find-Enemy", "visit Shop", "0", "0", "-> cave", lastAction} },
-    { "Cave",                   { "find-Creature", "seek crystal", "0", "0", "-> forest", lastAction} },
-    { "Forest",                 { "find-Creature", "0", "0", "0", "-> Crimson-Castle", lastAction} },
-    { "Crimson-Castle",         { "find-Enemy", "0", "0", "0", "-> Desert-Dungeon", lastAction} },
-    { "Desert-Dungeon",         { "find-Creature", "0", "0", "0", "-> Underlands", lastAction} },
-    { "Underlands",             { "find-Creature", "0", "0", "0", "-> Conquerors-Path", lastAction} },
-    { "Conquerors-Path",        { "find-Cryptids", "seek Conqueror", "0", "0", "Dunespecters-Tunnel", lastAction} },
-    { "Dunespecters-Tunnel",    { "find-Scoridrae", "seek Dunespecter", "0", "0", "-> Hasmal", lastAction} },
+    { "Home",                   { "Sleep", "repair-equipment", "eat", "paint-east-wall", ">Jallra", lastAction,} },
+    { "Jallra",                 { "find-Enemy", "visit Shop", "0", "0", ">cave", lastAction} },
+    { "Cave",                   { "find-Creature", "seek crystal", "0", "0", ">forest", lastAction} },
+    { "Forest",                 { "find-Creature", "0", "0", "0", ">Crimson-Castle", lastAction} },
+    { "Crimson-Castle",         { "find-Enemy", "0", "0", "0", ">Desert-Dungeon", lastAction} },
+    { "Desert-Dungeon",         { "find-Creature", "0", "0", "0", ">Underlands", lastAction} },
+    { "Underlands",             { "find-Creature", "0", "0", "0", ">Conquerors-Path", lastAction} },
+    { "Conquerors-Path",        { "find-Cryptids", "seek Conqueror", "0", "0", ">Dunespecters-Tunnel", lastAction} },
+    { "Dunespecters-Tunnel",    { "find-Scoridrae", "seek Dunespecter", "0", "0", ">Hasmal", lastAction} },
     { "Hasmal",                 { "find-Hasmari", "seek Azumos", "conquer-Hasmal", "0", "0", lastAction} }
 };
 

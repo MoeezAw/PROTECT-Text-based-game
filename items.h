@@ -3,7 +3,7 @@
 #ifndef NAMES_H
 #define NAMES_H
 
-#define FISTDAMAGE      5
+#define FISTDAMAGE      10
 
 #define EMPTY           "Empty"
 #define EMPTY_HEAL      1

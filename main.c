@@ -8,9 +8,8 @@
 NOTE TO SELF:
 Last time i worked on battle function
 do the TODO functions and implement the battle, add a loop in the game function
-
 */
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
@@ -40,8 +39,6 @@ typedef struct item
     int uses_max;
 }   item;
 
-
-
 typedef struct player
 {
     int level;
@@ -67,12 +64,13 @@ int rolldie(int sides);
 int game();
 int findenemy();
 int goBack();
+int goForward();    // pretty much donse
 
 // TODO:
-int evaluateAction(int action);
-int Battle(enemy foe);
-void printBattleUI(enemy foe);
-enemy createEnemy();
+int evaluateAction(int action); // gotta eval all actions
+int Battle(enemy foe); // gotta fix this
+void printBattleUI(enemy foe); // broken
+enemy createEnemy(); // Still gotta implement the rest of the enemies
 
 // system essential functions:
 void exitGame();
@@ -102,16 +100,10 @@ int main() {
     if (first_run) {
         first_run_code();
     }
+    // Possibility 1
     if (!first_run)
     {
         load(dataFile);
-        for (int i = 0; i < 3; i++)
-        {
-            printf("Loading game data in %d seconds %s", 3 - i, (i == 0) ? "." : (i == 1) ? ".." : "...");
-            Sleep(1000);
-            printf("\033c");
-        }
-        Sleep(500);
     }
     
     int input = 0;
@@ -151,10 +143,15 @@ int main() {
 int game()
 {
     int action = 0;
-    displayUI();
+    do
+    {
+        action = 0;
+        gotoxy(0,0);
+        displayUI();
 
-    action = getInput();
-    evaluateAction(action);
+        action = getInput();
+        evaluateAction(action);
+    } while (action != ESC);
 
     return 1;
 }
@@ -174,8 +171,7 @@ void exitGame()
 {
     printf("\033c");
     printf("Exiting...\n");
-    save();
-    if (save)
+    if (save())
     {
         printf("Saved progress.\n");
     }
@@ -224,7 +220,6 @@ void first_run_code() {
     printf("\033c");
     printf("Good luck and have fun!\n");
     printf("\033c");
-    return;
 }
 
 int save() {
@@ -312,6 +307,7 @@ int load() {
         {
             plr.inventory[i].heal = EMPTY_HEAL;
             plr.inventory[i].damage_multiplier = EMPTY_DAMAGE;
+            plr.inventory[i].uses_max = INT_MAX;
         }
         
     }
@@ -383,6 +379,7 @@ void printInventory()
 }
 
 void displayUI() {
+    printf("\033c"); // Clear console
     printInventory();
     printPossibleActions();
 }
@@ -400,7 +397,7 @@ void deleteUsedItems(FILE* file) {
             strcpy(plr.inventory[i].name, EMPTY);
         }
     }
-    displayUI();
+    //displayUI();
 }
 
 void printPossibleActions()
@@ -413,6 +410,38 @@ void printPossibleActions()
     }
 }
 
+/**
+ * @brief   Moves the player forward to the next location. If this is not achieved, programm will return 1 and exit.
+ * TODO:    Later implement game ending.
+ */
+int goForward()
+{
+    int locationID = getPlayerLocationID(); // Get player location ID (home = 0, jallra = 1, ...)
+    //printf("locationsunlcoekd: %d\n", plr.locationsUNLOCKED-1);
+    //printf("locationID: %d\n", locationID+1);
+
+    if ((plr.locationsUNLOCKED-1) < locationID+1) // Check if player can move forward
+    {
+        printf("You have not unlocked this location yet.\n");
+        Sleep(1000);
+        return 0;
+    }
+    else
+    {
+        strcpy(plr.location, locs_acs[locationID+1].location);
+        printf("Going forward to %s\n", plr.location);
+        //exit(1);
+        return 1;
+    }
+    
+    return 0;
+}
+
+/**
+ * @brief   Evaluates the input of the user and executes functions based on it.
+ * @param   action  (users input)
+ * @return  int (currently purposeless)
+ */
 int evaluateAction(int action)
 {
     // What locationID is the player at?
@@ -422,6 +451,10 @@ int evaluateAction(int action)
     {
     case 6:
         if (!goBack()) exitGame();
+        break;
+    case 5:
+        printf("GOING FORWARD\n");
+        goForward();
         break;
     case 1:
         if (!location && plr.health >= 100) // Player tries to rest with 100HP
@@ -435,7 +468,7 @@ int evaluateAction(int action)
         }
         else if (location > 0 && location < 10) // Player tries to find enemy
         {
-            if (findenemy())
+            if (findenemy() && plr.health >= 1)
             {
                 Battle( createEnemy() );
             }
@@ -444,6 +477,11 @@ int evaluateAction(int action)
     }
 }
 
+/**
+ * @brief   Battle function for player vs enemy. Basic battle system. (a little luck based)
+ * @param   foe The enemy the player is fighting.
+ * @return  1 = Player won, 0 = Player lost
+ */
 int Battle(enemy foe)
 {
     printf("\033c");
@@ -451,7 +489,7 @@ int Battle(enemy foe)
     float FDM = 1.0; // Foe Damage Multiplier
     do
     {
-        gotoxy(0, 0); // Set cursor to top left
+        printf("\033c"); // Clear screen
         // print battle UI
         printBattleUI(foe);
         // Player Attack:
@@ -463,30 +501,41 @@ int Battle(enemy foe)
             RESTORECURSORPOS();
             printf("\x1b[u");
             attack = getInput();
-        } while (attack < 1 && attack > 6);
+        } while (attack < 1 || attack > 6);
         // use player attack / item
         attack -= 1;
-        if (plr.inventory[attack].uses > 0)
+        if (plr.inventory[attack].uses < plr.inventory[attack].uses_max)
         {
-            foe.health -= ((int)(((float)FISTDAMAGE) * (plr.inventory[attack].damage_multiplier)));
-            if (plr.health < 100)
+            printf("Using %s\n", plr.inventory[attack].name);
+            Sleep(2000);
+            int damage = (int)( (float)FISTDAMAGE * plr.inventory[attack].damage_multiplier * (float)(rolldie(6) / 6.0) ); // Added randomness to the damage
+            foe.health -= damage;
+            printf("Dealt %d damage to %s\n", damage, foe.name);
+            Sleep(1000);
+            if (100 > plr.health)
             {
-                plr.health += ((int)(((float)plr.health) * (plr.inventory[attack].heal)));
+                plr.health = (int)( (float)plr.health * plr.inventory[attack].heal );
+                if (plr.health > 100) plr.health = 100;
+                //DEBUG:
+                printf("You healed: %i\n", (int)( (float)plr.health - ( (float)plr.health / plr.inventory[attack].heal )  ));
+                Sleep(1000);
             }
             plr.inventory[attack].uses += 1;
             // Generate random foe dmg multiplier when player uses multiplier
         }
         // print battle UI
-        printBattleUI(foe);
+        //printBattleUI(foe);
         // Delete used items
         deleteUsedItems(dataFile);
-        
-        // Enemy attack:
-        FDM = ((float)(rolldie(6) / 6)) + 0.5; // Generate random foe dmg multiplier  (in 2 out of 6 cases, the multiplier is <1)
-        plr.health -= ((int)(((float)foe.damage) * FDM));
 
+        // Enemy attack:
+        FDM = ( (float)(rolldie(6) / 6.0) ) /* + 0.5f -- removed cuz its unfair otherwise */; // Generate random foe dmg multiplier  (in 2 out of 6 cases, the multiplier is <1)        plr.health -= ((int)(((float)foe.damage) * FDM));
+        plr.health -= (int)( (float)foe.damage * FDM );
+        //DEBUG:
+        printf("The %s dealt %d damage to you.\n", foe.name, (int)((float)foe.damage * FDM));
+        Sleep(1000);
     } while (foe.health > 0 && plr.health > 0);
-    
+
     if (foe.health <= 0)
     {
         printf("You have defeated the %s!\n", foe.name);
@@ -494,6 +543,7 @@ int Battle(enemy foe)
     }
     else
     {
+        plr.health = 0;
         printf("You have been defeated by the %s!\n", foe.name);
         return 0;
     }
@@ -557,8 +607,9 @@ int getPlayerLocationID()
 int goBack()
 {
     int locationID = getPlayerLocationID();
-    if (locationID == 0) exitGame();
+    if (locationID == 0) return 0;
     strcpy(plr.location, locs_acs[locationID-1].location);
+    printf("Going back to %s\n", plr.location);
     return 1;
 }
 

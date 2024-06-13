@@ -1,5 +1,5 @@
 1
-88
+32
 Home
 Sword
 Empty
@@ -7,4 +7,5 @@ Empty
 Empty
 Empty
 Empty
+2
 2
