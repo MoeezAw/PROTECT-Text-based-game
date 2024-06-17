@@ -1,5 +1,5 @@
 Sword
-49
+70
 Empty
 0
 Empty
@@ -10,5 +10,3 @@ Empty
 0
 Empty
 0
-
-

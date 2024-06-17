@@ -46,6 +46,7 @@ typedef struct player
     char location[SLEN];
     item inventory[INVENTORY_CAPACITY]; // Inventory array
     int locationsUNLOCKED;
+    int coins;
 }   player;
 
 player plr;
@@ -64,12 +65,13 @@ int rolldie(int sides);
 int game();
 int findenemy();
 int goBack();
-int goForward();    // pretty much donse
+int Battle(enemy foe); // done for now
+int goForward();    // pretty much done
+void printBattleUI(enemy foe); // broken
 
+void printShop();
 // TODO:
 int evaluateAction(int action); // gotta eval all actions
-int Battle(enemy foe); // gotta fix this
-void printBattleUI(enemy foe); // broken
 enemy createEnemy(); // Still gotta implement the rest of the enemies
 
 // system essential functions:
@@ -103,7 +105,7 @@ int main() {
     // Possibility 1
     if (!first_run)
     {
-        load(dataFile);
+        load();
     }
     
     int input = 0;
@@ -167,6 +169,20 @@ void main_menu() {
     printf("Input: ");
 }
 
+void printShop() {
+    printf("\033c");
+    // Ueberschrift:
+    barrier();
+    printf("%22s\n", "Shop", " ");
+    barrier();
+    printf("\n\n");
+    // Print Items:
+    for (int i = 1; i < AMT_ITEMS; i++) {
+        printf("%i: %s: %i Coins", i, itemslist[i].name, itemslist[i].cost);
+        printf("\n");
+    }
+}
+
 void exitGame()
 {
     printf("\033c");
@@ -193,6 +209,7 @@ void first_run_code() {
     plr.level = 1;
     plr.health = 100;
     plr.locationsUNLOCKED = 2;
+    plr.coins = 10;
     strcpy(plr.location, locs_acs[0].location);
     for (int i = 0; i < INVENTORY_CAPACITY; i++)
     {
@@ -233,10 +250,11 @@ int save() {
         fprintf(dataFile, "%s\n", plr.inventory[i].name);
     }
     fprintf(dataFile, "%d\n", plr.locationsUNLOCKED);
+    fprintf(dataFile, "%d\n", plr.coins);
 
     // Save inventory stats to file:
     FILE* usesFile = NULL;
-    usesFile = fopen("files/uses.txt", "r+");
+    usesFile = fopen("files/uses.txt", "w"); // FIXME: if not saving correctly, change mode to r+
     if ( NULL == usesFile ) {
         printf("%s", LOAD_ERROR);
         return 0;
@@ -266,50 +284,23 @@ int load() {
         fscanf(dataFile, "%s", plr.inventory[i].name);
     }
     fscanf(dataFile, "%d", &plr.locationsUNLOCKED);
+    fscanf(dataFile, "%d", &plr.coins);
     
-    // Load inventory stats from file:
-    // Open items file
-    FILE* itemsFile = NULL;
-    itemsFile = fopen("files/uses.txt", "r");
-    if ( NULL == itemsFile ) {
-        printf("%s", LOAD_ERROR);
-        return 0;
-    }
     // Load item stats from file:
     for (int i = 0; i < INVENTORY_CAPACITY; i++)
     {
-        if ( !(strcmp(plr.inventory[i].name, SWORD)) )
+        for (int j = 0; j < AMT_ITEMS; j++)
         {
-            plr.inventory[i].heal = SWORD_HEAL;
-            plr.inventory[i].damage_multiplier = SWORD_DAMAGE;
-            plr.inventory[i].uses_max = SWORD_USES_MAX;
-            // Load Uses
-            getUses(SWORD, i);
-            
+            if (!strcmp(plr.inventory[i].name, itemslist[j].name))
+            {
+                plr.inventory[i].damage_multiplier = itemslist[j].damage;
+                plr.inventory[i].heal = itemslist[j].heal;
+                plr.inventory[i].uses_max = itemslist[j].max_uses;
+
+                getUses(plr.inventory[i].name, i);
+                break; // Add break statement to exit the loop once the item is found
+            }
         }
-        else if (strcmp(plr.inventory[i].name, JUICE) == 0)
-        {
-            plr.inventory[i].heal = JUICE_HEAL;
-            plr.inventory[i].damage_multiplier = JUICE_DAMAGE;
-            plr.inventory[i].uses_max = JUICE_USES_MAX;
-            // Load Uses
-            getUses(JUICE, i);
-        }
-        else if (strcmp(plr.inventory[i].name, BREAD) == 0)
-        {
-            plr.inventory[i].heal = BREAD_HEAL;
-            plr.inventory[i].damage_multiplier = BREAD_DAMAGE;
-            plr.inventory[i].uses_max = BREAD_USES_MAX;
-            // Load Uses
-            getUses(BREAD, i);
-        }
-        else if (strcmp(plr.inventory[i].name, EMPTY) == 0)
-        {
-            plr.inventory[i].heal = EMPTY_HEAL;
-            plr.inventory[i].damage_multiplier = EMPTY_DAMAGE;
-            plr.inventory[i].uses_max = INT_MAX;
-        }
-        
     }
     return 1;
 }
@@ -332,11 +323,11 @@ void getUses(char item_name[], int Index) {
         fscanf(usesFile, "%s", tmp);
         if ( !(strcmp(tmp, item_name)) )
         {
-            fscanf(usesFile, "%d", &plr.inventory[i].uses);
+            fscanf(usesFile, "%d", &plr.inventory[Index].uses);
             break;
         }
         else
-        {
+        {   // Throw away the next int if the item is not found
             fscanf(usesFile, "%d", &tmpINT);
         }
     }
@@ -365,16 +356,13 @@ int isFirstRun() {
 
 void printInventory()
 {
-    printf("[Level: %d]     [Health: %d]        [Location: %s]\n", plr.level, plr.health, plr.location);
+    printf("[Level: %d]     [Coins: %d]     [Health: %d]        [Location: %s]\n", plr.level, plr.coins, plr.health, plr.location);
     printf("Inventory: ");
-    for (int i = 0; i < INVENTORY_CAPACITY/2; i++)
+
+    for (int i = 0; i < INVENTORY_CAPACITY; i++)
     {
-        printf("%01i[%5s: %03d/%03d] ", i+1, plr.inventory[i].name, plr.inventory[i].uses, plr.inventory[i].uses_max);
-    }
-    printf("\n           ");
-    for (int i = INVENTORY_CAPACITY/2; i < INVENTORY_CAPACITY; i++)
-    {
-        printf("%01i[%5s: %03d/%03d] ", i+1, plr.inventory[i].name, plr.inventory[i].uses, plr.inventory[i].uses_max);
+        if (i == INVENTORY_CAPACITY/2) printf("\n           ");
+        printf("%01i[%5s: %03d/%03d] ", i+1, plr.inventory[i].name, plr.inventory[i].uses, (plr.inventory[i].uses_max == INT_MAX) ? 0 : plr.inventory[i].uses_max);
     }
 }
 
@@ -449,32 +437,37 @@ int evaluateAction(int action)
     // Handle go back action:
     switch (action)
     {
-    case 6:
+    case 6: // GO BACK
         if (!goBack()) exitGame();
         break;
-    case 5:
-        printf("GOING FORWARD\n");
+    case 5: // GO FORWARD
         goForward();
         break;
     case 1:
+        // REST ( IF CANT: INVALID )
         if (!location && plr.health >= 100) // Player tries to rest with 100HP
         {
             printf("You good fam\n");
         }
+        // REST ( HOME )
         else if (!location  && plr.health < 100) // Player rests
         {
             plr.health = 100;
             printf("You have been healed to full health.\n");
         }
+        // ENEMY / BATTLE:
         else if (location > 0 && location < 10) // Player tries to find enemy
         {
-            if (findenemy() && plr.health >= 1)
-            {
-                Battle( createEnemy() );
+            if (plr.health >= 1) {  // Does the player have HP?
+                if (findenemy())    // If enemy is found, enter battle
+                {
+                    Battle( createEnemy() );
+                }
             }
         }
-        
     }
+
+    return 1;
 }
 
 /**
@@ -507,18 +500,18 @@ int Battle(enemy foe)
         if (plr.inventory[attack].uses < plr.inventory[attack].uses_max)
         {
             printf("Using %s\n", plr.inventory[attack].name);
-            Sleep(2000);
+            Sleep(200);
             int damage = (int)( (float)FISTDAMAGE * plr.inventory[attack].damage_multiplier * (float)(rolldie(6) / 6.0) ); // Added randomness to the damage
             foe.health -= damage;
             printf("Dealt %d damage to %s\n", damage, foe.name);
-            Sleep(1000);
+            Sleep(200);
             if (100 > plr.health)
             {
                 plr.health = (int)( (float)plr.health * plr.inventory[attack].heal );
                 if (plr.health > 100) plr.health = 100;
                 //DEBUG:
                 printf("You healed: %i\n", (int)( (float)plr.health - ( (float)plr.health / plr.inventory[attack].heal )  ));
-                Sleep(1000);
+                Sleep(200);
             }
             plr.inventory[attack].uses += 1;
             // Generate random foe dmg multiplier when player uses multiplier
@@ -533,7 +526,7 @@ int Battle(enemy foe)
         plr.health -= (int)( (float)foe.damage * FDM );
         //DEBUG:
         printf("The %s dealt %d damage to you.\n", foe.name, (int)((float)foe.damage * FDM));
-        Sleep(1000);
+        Sleep(200);
     } while (foe.health > 0 && plr.health > 0);
 
     if (foe.health <= 0)
@@ -575,7 +568,7 @@ void printBattleUI(enemy foe)
     barrier();
     printf("\n\n");
     printf("\x1b[4m%-20s%10s%-20s\x1b[0m\n", "You", " ", foe.name);
-    printf("%03i%27s%03i\n", plr.health, " ", foe.health);
+    printf("%03iHP%25s%03iHP\n", plr.health, " ", foe.health);
     printf("\n\n");
 }
 

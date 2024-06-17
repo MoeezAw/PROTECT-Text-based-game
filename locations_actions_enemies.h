@@ -63,19 +63,19 @@ typedef struct enemy
 typedef struct location_action {
     char location[SLEN];
     char actions[MAX_POSSIBLE_ACTIONS][SLEN];
-} loc_act;
+}   loc_act;
 
 loc_act locs_acs[AMT_LOCATIONS] = {
     { "Home",                   { "Sleep", "repair-equipment", "eat", "paint-east-wall", ">Jallra", lastAction,} },
     { "Jallra",                 { "find-Enemy", "visit Shop", "0", "0", ">cave", lastAction} },
-    { "Cave",                   { "find-Creature", "seek crystal", "0", "0", ">forest", lastAction} },
-    { "Forest",                 { "find-Creature", "0", "0", "0", ">Crimson-Castle", lastAction} },
-    { "Crimson-Castle",         { "find-Enemy", "0", "0", "0", ">Desert-Dungeon", lastAction} },
-    { "Desert-Dungeon",         { "find-Creature", "0", "0", "0", ">Underlands", lastAction} },
-    { "Underlands",             { "find-Creature", "0", "0", "0", ">Conquerors-Path", lastAction} },
-    { "Conquerors-Path",        { "find-Cryptids", "seek Conqueror", "0", "0", ">Dunespecters-Tunnel", lastAction} },
-    { "Dunespecters-Tunnel",    { "find-Scoridrae", "seek Dunespecter", "0", "0", ">Hasmal", lastAction} },
-    { "Hasmal",                 { "find-Hasmari", "seek Azumos", "conquer-Hasmal", "0", "0", lastAction} }
+    { "Cave",                   { "find-Creature", "collect-crystal", "0", "0", ">forest", lastAction} },
+    { "Forest",                 { "find-Creature", "collect-truffle", "0", "0", ">Crimson-Castle", lastAction} },
+    { "Crimson-Castle",         { "find-Enemy", "collect-artwork", "-", "0", ">Desert-Dungeon", lastAction} },
+    { "Desert-Dungeon",         { "find-Creature", "collect-fossil", "-", "0", ">Underlands", lastAction} },
+    { "Underlands",             { "find-Creature", "collect-inscription", "0", "0", ">Conquerors-Path", lastAction} },
+    { "Conquerors-Path",        { "find-Cryptids", "seek-Conqueror", "0", "0", ">Dunespecters-Tunnel", lastAction} },
+    { "Dunespecters-Tunnel",    { "find-Scoridrae", "seek-Dunespecter", "0", "0", ">Hasmal", lastAction} },
+    { "Hasmal",                 { "find-Hasmari", "seek-Azumos", "conquer-Hasmal", "0", "0", lastAction} }
 };
 
 #endif // LOCATIONS_ACTIONS_ENEMIES_H
