@@ -16,11 +16,12 @@
 10:    "Hasmal"                // Level 100 (End)
 */
 
-#define TRAVEL_IDX      4
+#define TRAVEL_IDX              4
 #define AMT_LOCATIONS           10
 #define MAX_POSSIBLE_ACTIONS    6
 #define lastAction              "go back"
 #define SLEN                    20
+#define DBG                     printf("####################\n");
 
 // Enemies:
 // Struct:
@@ -50,15 +51,55 @@ typedef struct enemy
 
 // Crimson Castle: Knight:
 #define CR_KNIGHT_NAME          "Knight"
-#define CR_KNIGHT_BASEDMG       25
+#define CR_KNIGHT_BASEDMG       20
 #define CR_KNIGHT_XPDROP        50
 
 // Crimson Castle: Red Knight:
 #define CR_RED_KNIGHT_NAME      "Red-Knight"
-#define CR_RED_KNIGHT_BASEDMG   30
+#define CR_RED_KNIGHT_BASEDMG   25
 #define CR_RED_KNIGHT_XPDROP    60
 
-// Desert Idea: Scorpion
+// Desert Dungeon: Scorpion:
+#define DE_SCORPION_NAME        "Scorpion"
+#define DE_SCORPION_BASEDMG     35
+#define DE_SCORPION_XPDROP      100
+
+// Underlands: GoGolen:
+#define UN_GOGOLEN_NAME         "GoGolen"
+#define UN_GOGOLEN_BASEDMG      40
+#define UN_GOGOLEN_XPDROP       150
+
+// Conquerors Path: Cryptid:
+#define CO_CRYPTID_NAME         "Cryptid"
+#define CO_CRYPTID_BASEDMG      50
+#define CO_CRYPTID_XPDROP       300
+
+// Dunespecters Tunnel: Scoridrae:
+#define DU_SCORIDRAE_NAME       "Scoridrae"
+#define DU_SCORIDRAE_BASEDMG    75
+#define DU_SCORIDRAE_XPDROP     500
+
+// Hasmal: Hasmari:
+#define HA_HASMARI_NAME         "Hasmari"
+#define HA_HASMARI_BASEDMG      80
+#define HA_HASMARI_XPDROP       1000
+
+// Bosses:
+// Hasmal: Azumos:
+#define HA_AZUMOS_NAME          "Azumos"
+#define HA_AZUMOS_BASEDMG       100
+#define HA_AZUMOS_XPDROP        5000
+
+// Dunespecters Tunnel: Dunespecter:
+#define DU_DUNESPECTER_NAME     "Dunespecter"
+#define DU_DUNESPECTER_BASEDMG  80
+#define DU_DUNESPECTER_XPDROP   2000
+
+// Conquerors Path: Conqueror:
+#define CO_CONQUEROR_NAME       "Conqueror"
+#define CO_CONQUEROR_BASEDMG    60
+#define CO_CONQUEROR_XPDROP     1000
+
 
 typedef struct location_action {
     char location[SLEN];
@@ -78,4 +119,4 @@ loc_act locs_acs[AMT_LOCATIONS] = {
     { "Hasmal",                 { "find-Hasmari", "seek-Azumos", "conquer-Hasmal", "0", "0", lastAction} }
 };
 
-#endif // LOCATIONS_ACTIONS_ENEMIES_H
+#endif /* LOCATIONS_ACTIONS_ENEMIES_H */

@@ -5,7 +5,7 @@
 
 #define FISTDAMAGE      10
 #define SLEN            20
-#define AMT_ITEMS       4
+#define AMT_ITEMS       5
 
 typedef struct items {
     char name[SLEN];
@@ -37,11 +37,19 @@ typedef struct items {
 #define SWORD_USES_MAX  150
 #define SWORD_COST      50
 
+// collectibles:
+#define CRYSTAL_WORTH   1
+#define TRUFFLE_WORTH   5
+#define ARTWORK_WORTH   20
+#define FOSSIL_WORTH    50
+#define INSCRIPTION_WORTH 100
+
 items_l itemslist[AMT_ITEMS] = {
     { EMPTY, EMPTY_HEAL, EMPTY_DAMAGE, INT_MAX, 0 },
     { JUICE, JUICE_HEAL, JUICE_DAMAGE, JUICE_USES_MAX, JUICE_COST },
     { BREAD, BREAD_HEAL, BREAD_DAMAGE, BREAD_USES_MAX, BREAD_COST },
-    { SWORD, SWORD_HEAL, SWORD_DAMAGE, SWORD_USES_MAX, SWORD_COST }
+    { SWORD, SWORD_HEAL, SWORD_DAMAGE, SWORD_USES_MAX, SWORD_COST },
+    {"Cock", 1.1, 1.5, 150, 50000}
 };
 
 #endif

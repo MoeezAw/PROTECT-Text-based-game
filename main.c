@@ -1,15 +1,25 @@
 /**
  * @brief       Main file of PROTECT
- * @author      xMo (DISCORD: alexanderaugustus, GITHUB: xMo)
+ * @author      xMo (DISCORD: alexanderaugustus, GITHUB: xMo-101)
  * @date        07.06.2024
  */
 
-/*
-NOTE TO SELF:
-Last time i worked on battle function
-do the TODO functions and implement the battle, add a loop in the game function
-*/
- 
+/**
+ *  IDEA: (LEVELING):
+ *      xp for next level;
+ *      level;
+ *      increase xp needed by 1.5 on each level
+ *
+ * ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+ * 
+ *  TODO:
+ *      1. Implement leveling system
+ *      2. fix battle end,
+ *      3. more items,
+ *      4. implement boss battles,
+ *      5. fill in all the actions,
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
@@ -24,6 +34,8 @@ do the TODO functions and implement the battle, add a loop in the game function
 #define LOAD_ERROR              "Error: Could not load data file.\n"
 #define gotoxy(x, y)            printf("\033[%d;%dH", (y), (x))
 #define barrier() (             printf("========================================\n") )
+#define throwDefeat()           printf("You have been defeated by the enemy.\n")
+#define throwVictory()          printf("You have defeated the enemy.\n")
 #define SAVECURSORPOS()         printf("\x1b[s")
 #define RESTORECURSORPOS()      printf("\x1b[u")
 /*
@@ -68,11 +80,13 @@ int goBack();
 int Battle(enemy foe); // done for now
 int goForward();    // pretty much done
 void printBattleUI(enemy foe); // broken
-
 void printShop();
+void collect();
+void shop();
+enemy createEnemy();
+
 // TODO:
 int evaluateAction(int action); // gotta eval all actions
-enemy createEnemy(); // Still gotta implement the rest of the enemies
 
 // system essential functions:
 void exitGame();
@@ -183,10 +197,56 @@ void printShop() {
     }
 }
 
+void shop() {
+    int input, freeSlot = -2;
+    int bought = 0;
+    printShop();
+    do
+    {
+        input = 0;
+        printf("What would you like to buy?\n");
+        printf("Input: ");
+        do
+        {
+            input = getInput();
+        } while ( input < 1 || input > (AMT_ITEMS-1) );
+        putchar(input + '0');
+        // Get users next free slot
+        if ( plr.coins >= itemslist[input].cost ) {
+            for (int i = 0; i < INVENTORY_CAPACITY; i++)
+            {
+                if (!strcmp(plr.inventory[i].name, EMPTY)) {
+                    freeSlot = i;
+                    break;
+                }
+            }
+        } else {
+            printf("You dont have enough coins to purchase this.\nYou need %i more coins to purchase this Item!", itemslist[input].cost - plr.coins);
+            system("PAUSE");
+            return;
+        }
+
+        // if inventory is full exit function
+        if (freeSlot == -2) {
+            printf("Your Inventory is full!\n");
+            return;
+        }
+        // Put bought bought item in inventory:
+        strcpy(plr.inventory[freeSlot].name, itemslist[input].name);
+        plr.inventory[freeSlot].uses_max = itemslist[input].max_uses;
+        plr.inventory[freeSlot].damage_multiplier = itemslist[input].damage;
+        plr.inventory[freeSlot].heal = itemslist[input].heal;
+        // Get money:
+        plr.coins -= itemslist[input].cost;
+        break;
+    } while (bought != 1);
+    printf("\nYou purchased 1 %s!\n\n", itemslist[input].name);
+    system("PAUSE");
+}
+
 void exitGame()
 {
     printf("\033c");
-    printf("Exiting...\n");
     if (save())
     {
         printf("Saved progress.\n");
@@ -199,7 +259,7 @@ void exitGame()
     // End of Program (Exit)
     fclose(dataFile);
     printf("\n");
-    system("PAUSE");
+    printf("Exiting . . .\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -443,6 +503,7 @@ int evaluateAction(int action)
     case 5: // GO FORWARD
         goForward();
         break;
+        // INPUT = 1 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
     case 1:
         // REST ( IF CANT: INVALID )
         if (!location && plr.health >= 100) // Player tries to rest with 100HP
@@ -465,9 +526,56 @@ int evaluateAction(int action)
                 }
             }
         }
+        break;
+        // INPUT = 2 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    case 2:
+        if (location == 1) shop();
+        else
+        if (location > 1 && location < 7) collect();
+        
     }
 
     return 1;
+}
+
+void collect() {
+    int locationID = getPlayerLocationID();
+    int sides = 21;
+    int n = rolldie(sides);
+    switch (locationID)
+    {
+        case 2:
+            if ( n < (sides/3) ) {
+                printf("You collected a crystal and made %i coins!\n", CRYSTAL_WORTH);
+                plr.coins += CRYSTAL_WORTH;
+            }
+            break;
+        case 3:
+            if (n < (sides/4)) {
+                printf("You collected a truffle and made %i coins!\n", TRUFFLE_WORTH);
+                plr.coins += TRUFFLE_WORTH;
+            }
+            break;
+        case 4:
+            if (n <= sides/5)
+                printf("You collected an artwork and made %i coins!\n", ARTWORK_WORTH);
+                plr.coins += ARTWORK_WORTH;
+            break;
+        case 5:
+            if ( n == 21) {
+                printf("You collected a fossil and made %i coins!\n", FOSSIL_WORTH);
+                plr.coins += FOSSIL_WORTH;
+            }
+            break;
+        case 6:
+            if (n == 10) {
+                printf("You collected an inscription and made %i coins!\n", INSCRIPTION_WORTH);
+                plr.coins += INSCRIPTION_WORTH;
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 /**
@@ -531,15 +639,16 @@ int Battle(enemy foe)
 
     if (foe.health <= 0)
     {
-        printf("You have defeated the %s!\n", foe.name);
+        throwVictory();
         return 1;
     }
     else
     {
         plr.health = 0;
-        printf("You have been defeated by the %s!\n", foe.name);
+        throwDefeat();
         return 0;
     }
+    system("PAUSE");
 }
 
 int findenemy()
@@ -606,6 +715,10 @@ int goBack()
     return 1;
 }
 
+/**
+ * @brief   Creates an enemy based on the players location.
+ * @return  The created enemy.
+ */
 enemy createEnemy()
 {
     enemy Foe;
@@ -617,6 +730,48 @@ enemy createEnemy()
             Foe.health = HP_FULL;
             Foe.damage = JA_BANDIT_BASEDMG;
             Foe.XPDrop = JA_BANDIT_XPDROP;
+            break;
+        case 2:
+            strcpy(Foe.name, CA_BAT_NAME);
+            Foe.health = HP_FULL;
+            Foe.damage = CA_BAT_BASEDMG;
+            Foe.XPDrop = CA_BAT_XPDROP;
+            break;
+        case 3:
+            strcpy(Foe.name, FO_WOLF_NAME);
+            Foe.health = HP_FULL;
+            Foe.damage = FO_WOLF_BASEDMG;
+            Foe.XPDrop = FO_WOLF_XPDROP;
+            break;
+        case 4:
+            strcpy(Foe.name, CR_KNIGHT_NAME);
+            Foe.health = HP_FULL;
+            Foe.damage = CR_KNIGHT_BASEDMG;
+            Foe.XPDrop = CR_KNIGHT_XPDROP;
+            break;
+        case 5:
+            strcpy(Foe.name, DE_SCORPION_NAME);
+            Foe.health = HP_FULL;
+            Foe.damage = DE_SCORPION_BASEDMG;
+            Foe.XPDrop = DE_SCORPION_XPDROP;
+            break;
+        case 6:
+            strcpy(Foe.name, UN_GOGOLEN_NAME);
+            Foe.health = HP_FULL;
+            Foe.damage = UN_GOGOLEN_BASEDMG;
+            Foe.XPDrop = UN_GOGOLEN_XPDROP;
+            break;
+        case 7:
+            strcpy(Foe.name, CO_CRYPTID_NAME);
+            Foe.health = HP_FULL;
+            Foe.damage = CO_CRYPTID_BASEDMG;
+            Foe.XPDrop = CO_CRYPTID_XPDROP;
+            break;
+        case 8:
+            strcpy(Foe.name, HA_HASMARI_BASEDMG);
+            Foe.health = HP_FULL;
+            Foe.damage = HA_HASMARI_BASEDMG;
+            Foe.XPDrop = HA_HASMARI_XPDROP;
             break;
         default:
             break;
